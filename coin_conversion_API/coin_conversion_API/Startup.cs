@@ -1,3 +1,4 @@
+using coin_conversion_API.configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -26,12 +27,25 @@ namespace coin_conversion_API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
+            ResolveDependencyConfig.ResolveDependencyConfig(services);
             services.AddControllers();
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "coin_conversion_API", Version = "v1" });
-            });
+            services.ResolveDependencyConfig();
+            services.ResolveSwagger();
+
+            services.Configure<ApiBehaviorOptions>(
+                options =>
+                {
+                    options.SuppressModelStateInvalidFilter = true;
+                });
+
+            services.AddCors(options =>
+                options.AddPolicy("MyPolicy", builder =>
+                {
+                    builder.AllowAnyOrigin()
+                           .AllowAnyMethod()
+                           .AllowAnyHeader();
+                })
+            );
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -40,13 +54,21 @@ namespace coin_conversion_API
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "coin_conversion_API v1"));
             }
 
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseSwagger(s =>
+            {
+                s.SerializeAsV2 = true;
+            });
+
+            app.UseSwaggerUI(s =>
+            {
+                s.SwaggerEndpoint("/swagger/v1/swagger.json", "Coin conversion API");
+            });
 
             app.UseAuthorization();
 
